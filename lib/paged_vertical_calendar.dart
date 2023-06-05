@@ -43,6 +43,7 @@ class PagedVerticalCalendar extends StatefulWidget {
     this.physics,
     this.scrollController,
     this.listPadding = EdgeInsets.zero,
+    this.contentPadding = EdgeInsets.zero,
     this.startWeekWithSunday = false,
     this.weekdaysToHide = const [],
   }) : this.initialDate = initialDate ?? DateTime.now().removeTime();
@@ -106,6 +107,9 @@ class PagedVerticalCalendar extends StatefulWidget {
   /// `[DateTime.sunday,DateTime.monday]`. By default all weekdays are shown
   final List<int> weekdaysToHide;
 
+  /// Additional content padding, so move content away from month heading, defaults to `0`
+  final EdgeInsets contentPadding;
+
   @override
   _PagedVerticalCalendarState createState() => _PagedVerticalCalendarState();
 }
@@ -121,8 +125,7 @@ class _PagedVerticalCalendarState extends State<PagedVerticalCalendar> {
   void initState() {
     super.initState();
 
-    if (widget.minDate != null &&
-        widget.initialDate.isBefore(widget.minDate!)) {
+    if (widget.minDate != null && widget.initialDate.isBefore(widget.minDate!)) {
       throw ArgumentError("initialDate cannot be before minDate");
     }
 
@@ -130,8 +133,7 @@ class _PagedVerticalCalendarState extends State<PagedVerticalCalendar> {
       throw ArgumentError("initialDate cannot be after maxDate");
     }
 
-    hideUp = !(widget.minDate == null ||
-        !widget.minDate!.isSameMonth(widget.initialDate));
+    hideUp = !(widget.minDate == null || !widget.minDate!.isSameMonth(widget.initialDate));
 
     _pagingReplyUpController = PagingController<int, Month>(
       firstPageKey: 0,
@@ -155,8 +157,7 @@ class _PagedVerticalCalendarState extends State<PagedVerticalCalendar> {
     if (widget.minDate != oldWidget.minDate) {
       _pagingReplyUpController.refresh();
 
-      hideUp = !(widget.minDate == null ||
-          !widget.minDate!.isSameMonth(widget.initialDate));
+      hideUp = !(widget.minDate == null || !widget.minDate!.isSameMonth(widget.initialDate));
     }
   }
 
@@ -187,8 +188,8 @@ class _PagedVerticalCalendarState extends State<PagedVerticalCalendar> {
       );
 
       final newItems = [month];
-      final isLastPage = widget.minDate != null &&
-          widget.minDate!.isSameDayOrAfter(month.weeks.first.firstDay);
+      final isLastPage =
+          widget.minDate != null && widget.minDate!.isSameDayOrAfter(month.weeks.first.firstDay);
 
       if (isLastPage) {
         return _pagingReplyUpController.appendLastPage(newItems);
@@ -216,8 +217,8 @@ class _PagedVerticalCalendarState extends State<PagedVerticalCalendar> {
       );
 
       final newItems = [month];
-      final isLastPage = widget.maxDate != null &&
-          widget.maxDate!.isSameDayOrBefore(month.weeks.last.lastDay);
+      final isLastPage =
+          widget.maxDate != null && widget.maxDate!.isSameDayOrBefore(month.weeks.last.lastDay);
 
       if (isLastPage) {
         return _pagingReplyDownController.appendLastPage(newItems);
@@ -232,8 +233,8 @@ class _PagedVerticalCalendarState extends State<PagedVerticalCalendar> {
 
   EdgeInsets _getDownListPadding() {
     final double paddingTop = hideUp ? widget.listPadding.top : 0;
-    return EdgeInsets.fromLTRB(widget.listPadding.left, paddingTop,
-        widget.listPadding.right, widget.listPadding.bottom);
+    return EdgeInsets.fromLTRB(
+        widget.listPadding.left, paddingTop, widget.listPadding.right, widget.listPadding.bottom);
   }
 
   @override
@@ -248,13 +249,12 @@ class _PagedVerticalCalendarState extends State<PagedVerticalCalendar> {
           slivers: [
             if (!hideUp)
               SliverPadding(
-                padding: EdgeInsets.fromLTRB(widget.listPadding.left,
-                    widget.listPadding.top, widget.listPadding.right, 0),
+                padding: EdgeInsets.fromLTRB(
+                    widget.listPadding.left, widget.listPadding.top, widget.listPadding.right, 0),
                 sliver: PagedSliverList(
                   pagingController: _pagingReplyUpController,
                   builderDelegate: PagedChildBuilderDelegate<Month>(
-                    itemBuilder:
-                        (BuildContext context, Month month, int index) {
+                    itemBuilder: (BuildContext context, Month month, int index) {
                       return _MonthView(
                         month: month,
                         monthBuilder: widget.monthBuilder,
@@ -275,12 +275,14 @@ class _PagedVerticalCalendarState extends State<PagedVerticalCalendar> {
                 builderDelegate: PagedChildBuilderDelegate<Month>(
                   itemBuilder: (BuildContext context, Month month, int index) {
                     return _MonthView(
-                        month: month,
-                        monthBuilder: widget.monthBuilder,
-                        dayBuilder: widget.dayBuilder,
-                        onDayPressed: widget.onDayPressed,
-                        startWeekWithSunday: widget.startWeekWithSunday,
-                        weekDaysToHide: widget.weekdaysToHide);
+                      month: month,
+                      monthBuilder: widget.monthBuilder,
+                      dayBuilder: widget.dayBuilder,
+                      onDayPressed: widget.onDayPressed,
+                      startWeekWithSunday: widget.startWeekWithSunday,
+                      weekDaysToHide: widget.weekdaysToHide,
+                      contentPadding: widget.contentPadding,
+                    );
                   },
                 ),
               ),
@@ -305,6 +307,7 @@ class _MonthView extends StatelessWidget {
     this.monthBuilder,
     this.dayBuilder,
     this.onDayPressed,
+    this.contentPadding = EdgeInsets.zero,
     required this.weekDaysToHide,
     required this.startWeekWithSunday,
   });
@@ -315,6 +318,7 @@ class _MonthView extends StatelessWidget {
   final ValueChanged<DateTime>? onDayPressed;
   final bool startWeekWithSunday;
   final List<int> weekDaysToHide;
+  final EdgeInsets contentPadding;
 
   @override
   Widget build(BuildContext context) {
@@ -334,28 +338,30 @@ class _MonthView extends StatelessWidget {
               month: month.month,
               year: month.year,
             ),
-        GridView.builder(
-          addRepaintBoundaries: false,
-          physics: NeverScrollableScrollPhysics(),
-          shrinkWrap: true,
-          padding: EdgeInsets.zero,
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: DateTime.daysPerWeek - weekDaysToHide.length,
+        Padding(
+          padding: contentPadding,
+          child: GridView.builder(
+            addRepaintBoundaries: false,
+            physics: NeverScrollableScrollPhysics(),
+            shrinkWrap: true,
+            padding: EdgeInsets.zero,
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: DateTime.daysPerWeek - weekDaysToHide.length,
+            ),
+            itemCount: validDates.length + blankSpaces,
+            itemBuilder: (BuildContext context, int index) {
+              if (index < blankSpaces) return SizedBox();
+        
+              final date = validDates[index - blankSpaces];
+              return AspectRatio(
+                aspectRatio: 1.0,
+                child: InkWell(
+                  onTap: onDayPressed == null ? null : () => onDayPressed!(date),
+                  child: dayBuilder?.call(context, date) ?? _DefaultDayView(date: date),
+                ),
+              );
+            },
           ),
-          itemCount: validDates.length + blankSpaces,
-          itemBuilder: (BuildContext context, int index) {
-            if (index < blankSpaces) return SizedBox();
-
-            final date = validDates[index - blankSpaces];
-            return AspectRatio(
-              aspectRatio: 1.0,
-              child: InkWell(
-                onTap: onDayPressed == null ? null : () => onDayPressed!(date),
-                child: dayBuilder?.call(context, date) ??
-                    _DefaultDayView(date: date),
-              ),
-            );
-          },
         ),
         SizedBox(height: 20),
       ],
@@ -411,8 +417,7 @@ class _DefaultDayView extends StatelessWidget {
   }
 }
 
-typedef MonthBuilder = Widget Function(
-    BuildContext context, int month, int year);
+typedef MonthBuilder = Widget Function(BuildContext context, int month, int year);
 typedef DayBuilder = Widget Function(BuildContext context, DateTime date);
 
 typedef OnMonthLoaded = void Function(int year, int month);
