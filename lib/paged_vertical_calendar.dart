@@ -107,7 +107,7 @@ class PagedVerticalCalendar extends StatefulWidget {
   /// `[DateTime.sunday,DateTime.monday]`. By default all weekdays are shown
   final List<int> weekdaysToHide;
 
-  /// Additional content padding, so move content away from month heading, defaults to `0`
+  /// Optional content horizontal padding, defaults to `0`
   final EdgeInsets contentPadding;
 
   @override
@@ -262,6 +262,7 @@ class _PagedVerticalCalendarState extends State<PagedVerticalCalendar> {
                         onDayPressed: widget.onDayPressed,
                         startWeekWithSunday: widget.startWeekWithSunday,
                         weekDaysToHide: widget.weekdaysToHide,
+                        contentPadding: widget.contentPadding,
                       );
                     },
                   ),
